@@ -1,6 +1,12 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-
+import ResizeWidthProvider from "@/components/provider/resize-width-provider";
+import { ClerkProvider } from "@clerk/nextjs";
+import EditorProvider from "@/components/provider/editor-provider";
+import ExcalidrawProvider from "@/components/provider/excalidraw-provider";
+import { ThemeProvider } from "@/components/provider/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { SocketProvider } from "@/components/provider/socket-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
@@ -11,7 +17,25 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <ClerkProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SocketProvider>
+              <ResizeWidthProvider>
+                <EditorProvider>
+                  <ExcalidrawProvider>{children}</ExcalidrawProvider>
+                </EditorProvider>
+              </ResizeWidthProvider>
+            </SocketProvider>
+          </ThemeProvider>
+        </ClerkProvider>
+        <Toaster />
+      </body>
     </html>
   );
 }
