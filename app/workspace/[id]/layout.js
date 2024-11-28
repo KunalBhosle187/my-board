@@ -2,7 +2,6 @@ import AiResponseProvider from "@/components/provider/ai-response-provider";
 import Navbar from "@/components/workspace/navbar";
 import { getWorkSpaceById } from "@/lib/queries";
 import React from "react";
-import RoomProvider from "@/components/provider/room-provider";
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
@@ -14,12 +13,12 @@ const WorkspaceLayout = async ({ children, params }) => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen flex flex-col">
       <AiResponseProvider>
-        {/* <RoomProvider roomId={params.id}> */}
         <Navbar title={data?.data?.title} id={params.id} />
-        {children}
-        {/* </RoomProvider> */}
+        <div className="flex-1 overflow-hidden">
+          {children}
+        </div>
       </AiResponseProvider>
     </div>
   );

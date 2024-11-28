@@ -4,15 +4,13 @@ import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useAuth } from "@clerk/nextjs";
 import clsx from "clsx";
 import { FileIcon, HistoryIcon } from "lucide-react";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { AIDialog } from "../ai/modal";
 import { AddUserModal } from "../collaborator";
-
 import ExportPdf from "../export/pdf";
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,10 +20,24 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
-import { updateWorkSpaceById } from "@/lib/queries";
+import { updateWorkSpaceById, getWorkSpaceById } from "@/lib/queries";
+import ActiveUsers from "../active-users";
 
 const Navbar = ({ title, id }) => {
   const { resizableWidth, setResizableWidth } = useContext(DynamicWidth);
+  const { userId } = useAuth();
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const checkOwnership = async () => {
+      const data = await getWorkSpaceById(id);
+      if (!data?.error) {
+        setIsOwner(data?.data?.user_id === userId);
+      }
+    };
+    checkOwnership();
+  }, [id, userId]);
+
   const handleFilename = async (title) => {
     const data = await updateWorkSpaceById(id, { title });
     if (data.error) {
@@ -33,6 +45,7 @@ const Navbar = ({ title, id }) => {
     }
     toast.success(data.message);
   };
+
   return (
     <>
       <div className="p-3 backdrop-blur-md shadow-sm grid grid-cols-3 items-center">
@@ -92,12 +105,13 @@ const Navbar = ({ title, id }) => {
             Canvas
           </Button>
         </div>
-        <div className="flex items-center justify-end gap-3">
-          <ExportPdf />
-          {/* <AIDialog /> */}
-          <AddUserModal reqId={id} />
-          <UserButton />
-          <ModeToggle />
+        <div className="flex items-center justify-end gap-4">
+          {isOwner && <AddUserModal reqId={id} />}
+          <ActiveUsers />
+          <div className="flex items-center gap-2">
+            <UserButton afterSignOutUrl="/" />
+            <ModeToggle />
+          </div>
         </div>
       </div>
       <Separator />

@@ -7,7 +7,6 @@ import React, {
   useEffect,
   useContext,
 } from "react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { ArrowBigLeftDashIcon } from "lucide-react";
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { useSocket } from "@/components/provider/socket-provider";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const Whiteboard = dynamic(
   async () => (await import("@/components/workspace/whiteboard")).default,
@@ -39,6 +39,7 @@ const Workspace = ({ params }) => {
   const [whiteboardData, setWhiteboardData] = useState([]);
   const { socket, isConnected } = useSocket();
   const { isSignedIn, user, isLoaded } = useUser();
+  const { userId } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [draggable, setDraggable] = useState(false);
@@ -88,24 +89,18 @@ const Workspace = ({ params }) => {
       setLoading(false);
     };
     getBlocks();
-  }, []);
+  }, [params.id, userId]);
 
   useEffect(() => {
     if (isSignedIn && isLoaded && socket && isConnected) {
-      const userObj = { 
-        id: user.id, 
-        name: user.fullName, 
-        img: user.imageUrl 
+      const userObj = {
+        id: user.id,
+        name: user.fullName,
+        img: user.imageUrl,
       };
-      
+
       // Join the room when socket is connected and user is authenticated
       socket.emit("create-room", params.id, userObj);
-
-      // Listen for other users joining
-      socket.on("user-joined", (userId, userData) => {
-        console.log("User joined:", userData);
-        // Handle new user joined event here
-      });
 
       // Cleanup listeners when component unmounts
       return () => {
@@ -135,10 +130,9 @@ const Workspace = ({ params }) => {
 
   return (
     <>
-      <Button onClick={() => socket.disconnect()}>Disconnect Socket</Button>
-      <main className="h-screen flex" ref={blockRef}>
+      <main className="flex h-full" ref={blockRef}>
         <div
-          className={clsx(`container max-w-full m-5 `, {
+          className={clsx(`max-w-full flex-1 flex flex-col`, {
             hidden: resizableWidth <= 3,
           })}
           style={{ width: `${resizableWidth}%` }}
@@ -148,9 +142,8 @@ const Workspace = ({ params }) => {
               <ArrowBigLeftDashIcon />
             </Button>
           )}
-          <ScrollArea className="h-screen  max-w-full">
+          <ScrollArea className="flex-1 h-[calc(100vh-4rem)]">
             <Editor value={editorData} workspaceId={params.id} />
-            <ScrollBar orientation="vertical" />
           </ScrollArea>
         </div>
 

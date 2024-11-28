@@ -49,14 +49,11 @@ const Cursor = ({ variant, name, color, x, y }) => {
           fill={color}
         />
       </svg>
-      <motion.div
-        style={nameStyle}
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.5, opacity: 0 }}
-      >
-        {name}
-      </motion.div>
+      {name && (
+        <div style={nameStyle}>
+          {name}
+        </div>
+      )}
     </motion.div>
   );
 };

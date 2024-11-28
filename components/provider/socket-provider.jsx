@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { io as ClientIO } from "socket.io-client";
+import { useUser } from "@clerk/nextjs";
+import { useParams } from "next/navigation";
 
 const SocketContext = createContext({
   socket: null,
@@ -13,43 +15,57 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = ({ children }) => {
+  const { user } = useUser();
+  const params = useParams();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!socket) {
-      const socketInstance = new ClientIO(
-        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-        {
-          path: "/api/socket/io",
-          addTrailingSlash: false,
-          withCredentials: true,
-          transports: ["polling"],
-        }
-      );
+    if (!user || !params?.id) return;
 
-      socketInstance.on("connect", () => {
-        console.log("Socket connected:", socketInstance.id);
-        setIsConnected(true);
-      });
+    const socketInstance = new ClientIO(
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      {
+        path: "/api/socket/io",
+        addTrailingSlash: false,
+        transports: ["polling"],
+      }
+    );
 
-      socketInstance.on("disconnect", () => {
-        console.log("Socket disconnected");
-        setIsConnected(false);
-      });
+    socketInstance.on("connect", () => {
+      console.log("Socket connected:", socketInstance.id);
+      setIsConnected(true);
+    });
 
-      socketInstance.on("connect_error", (err) => {
-        console.log("Socket connection error:", err.message);
-        setIsConnected(false);
-      });
+    socketInstance.on("disconnect", () => {
+      console.log("Socket disconnected");
+      setIsConnected(false);
+    });
 
-      setSocket(socketInstance);
+    socketInstance.on("connect_error", (err) => {
+      console.log("Socket connection error:", err.message);
+      setIsConnected(false);
+    });
 
-      return () => {
+    // Handle socket status
+    socketInstance.on("socket-status", ({ connected }) => {
+      if (!connected && socketInstance.connected) {
+        // Only one user, disconnect socket
         socketInstance.disconnect();
-      };
-    }
-  }, []);
+      } else if (connected && !socketInstance.connected) {
+        // Multiple users, reconnect socket
+        socketInstance.connect();
+      }
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+      setSocket(null);
+      setIsConnected(false);
+    };
+  }, [user, params?.id]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

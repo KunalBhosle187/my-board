@@ -13,8 +13,8 @@ const WorkspaceIndex = async () => {
       <Navbar />
       <div className="container">
         <Create />
-        <Separator />
-        <div className="py-10 grid grid-cols-4 gap-4">
+        <Separator className="my-6" />
+        <div className="py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {workspace?.data?.map((item) => (
             <WorkspaceCard
               key={item.id}
@@ -22,6 +22,8 @@ const WorkspaceIndex = async () => {
               title={item.title}
               description={item.description}
               created_at={item.created_at}
+              user_id={item.user_id}
+              invite={item.invite}
             />
           ))}
         </div>

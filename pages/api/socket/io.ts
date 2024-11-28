@@ -3,24 +3,14 @@ import { Server as ServerIO, Socket } from "socket.io";
 import { NextApiRequest, NextApiResponse } from "next";
 import { NextApiResponseServerIo } from "@/lib/types";
 import { LRUCache } from "lru-cache";
-
-const WS_SUBTYPES = {
-  INIT: "INIT",
-  UPDATE: "UPDATE",
-} as const;
-
-const WS_EVENTS = {
-  SCENE_UPDATE: "scene-update",
-  USER_JOIN: "user-join",
-  RECEIVE_EDITOR_CHANGES: "receive-editor-changes",
-  RECEIVE_CURSOR_MOVE: "receive-cursor-move",
-} as const;
+import { WS_EVENTS, WS_SUBTYPES } from "types/socket";
 
 interface RoomData {
   elementVersions: Map<string, number>;
   userColors: Map<string, string>;
   userSockets: Map<string, string>;
   lastActivity: number;
+  users: Map<string, UserObject>;
 }
 
 interface UserObject {
@@ -97,23 +87,48 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
     io.on("connection", (socket: Socket) => {
       let currentRoom: string | null = null;
 
+      socket.on("get-room-users", (roomId: string) => {
+        const roomData = roomsData.get(roomId);
+        if (roomData) {
+          const users = Array.from(roomData.users.values());
+          socket.emit("room-users", users);
+        } else {
+          socket.emit("room-users", []);
+        }
+      });
+
       socket.on("create-room", (roomId: string, userObj: UserObject) => {
         socket.join(roomId);
         currentRoom = roomId;
         const userColor = getUniqueColor(roomId);
         let roomData = roomsData.get(roomId);
+
         if (!roomData) {
           roomData = {
             elementVersions: new Map(),
             userColors: new Map(),
             userSockets: new Map(),
+            users: new Map(),
             lastActivity: Date.now(),
           };
           roomsData.set(roomId, roomData);
         }
+
         roomData.userColors.set(userObj.id, userColor);
         roomData.userSockets.set(userObj.id, socket.id);
+        roomData.users.set(userObj.id, userObj);
         roomData.lastActivity = Date.now();
+
+        // Check number of users in the room
+        const usersInRoom = Array.from(roomData.users.values());
+        if (usersInRoom.length === 1) {
+          // First user, ensure socket connection
+          socket.emit("socket-status", { connected: true });
+        } else if (usersInRoom.length >= 2) {
+          // Multiple users, socket remains connected
+          io.to(roomId).emit("socket-status", { connected: true });
+        }
+
         socket.to(roomId).emit(WS_EVENTS.USER_JOIN, userObj, roomId, userColor);
       });
 
@@ -155,21 +170,21 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
 
       socket.on(
         "send-cursor-move",
-        (position: any, userId: string, cursorType: string) => {
+        (position: any, user: UserObject, cursorType: string) => {
           if (!currentRoom) return;
           const roomData = roomsData.get(currentRoom);
           if (!roomData) return;
-          let userColor = roomData.userColors.get(userId);
+          let userColor = roomData.userColors.get(user.id);
           if (!userColor) {
             userColor = getUniqueColor(currentRoom);
-            roomData.userColors.set(userId, userColor);
+            roomData.userColors.set(user.id, userColor);
           }
           roomData.lastActivity = Date.now();
           socket
             .to(currentRoom)
             .emit(
               WS_EVENTS.RECEIVE_CURSOR_MOVE,
-              userId,
+              user,
               position,
               userColor,
               cursorType
@@ -184,9 +199,23 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
             const userIdToRemove = Array.from(
               roomData.userSockets.entries()
             ).find(([, socketId]) => socketId === socket.id)?.[0];
+
             if (userIdToRemove) {
               roomData.userColors.delete(userIdToRemove);
               roomData.userSockets.delete(userIdToRemove);
+              roomData.users.delete(userIdToRemove);
+
+              // Check remaining users after disconnection
+              const remainingUsers = Array.from(roomData.users.values());
+
+              if (remainingUsers.length === 1) {
+                // Only one user left, signal potential socket disconnection
+                io.to(currentRoom).emit("socket-status", { connected: false });
+              } else if (remainingUsers.length === 0) {
+                // No users left, remove the room
+                roomsData.delete(currentRoom);
+              }
+
               socket
                 .to(currentRoom)
                 .emit(
@@ -195,9 +224,6 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
                   currentRoom,
                   null
                 );
-            }
-            if (roomData.userSockets.size === 0) {
-              roomsData.delete(currentRoom);
             }
           }
         }

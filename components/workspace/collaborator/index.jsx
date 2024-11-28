@@ -7,11 +7,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { inviteUser } from "@/lib/queries";
 import { toast } from "sonner";
+import { Share2Icon } from "lucide-react";
 
 const emailSchema = z.string().email("Invalid email address");
 
@@ -46,11 +48,16 @@ export const AddUserModal = ({ reqId }) => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Add Users</Button>
+      <Button onClick={() => setOpen(true)} variant="outline" size="sm">
+        <Share2Icon className="mr-2 size-4" /> Invite
+      </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Invite user</DialogTitle>
+            <DialogTitle>Share workspace</DialogTitle>
+            <DialogDescription>
+              Invite others to collaborate on this workspace in real-time.
+            </DialogDescription>
           </DialogHeader>
           <div>
             <div className="flex items-center space-x-2">
