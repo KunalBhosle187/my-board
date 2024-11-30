@@ -1,8 +1,6 @@
 "use client";
 import React from "react";
 import { ModeToggle } from "../theme/mode-toggle";
-import { useAuth } from "@clerk/nextjs";
-import { AddUserModal } from "../workspace/collaborator";
 import { usePathname } from "next/navigation";
 
 const Navbar = () => {
