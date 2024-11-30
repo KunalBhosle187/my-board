@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useContext } from "react";
 import EditorJS from "@editorjs/editorjs";
 import { useParams } from "next/navigation";
 import { useSocket } from "@/components/provider/socket-provider";
@@ -9,6 +9,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { updateWorkSpaceById } from "@/lib/queries";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { EditorData } from "@/components/provider/editor-provider";
 
 function Editor({ value, workspaceId }) {
   console.log("Editor rendering with value:", value);
@@ -19,9 +20,16 @@ function Editor({ value, workspaceId }) {
   const prevDataRef = useRef(null);
   const isInitializedRef = useRef(false);
   const { theme } = useTheme();
-
+  const { blocks, setBlocks } = useContext(EditorData);
   const params = useParams();
   const { socket } = useSocket();
+
+  // Sync initial value with context if available
+  useEffect(() => {
+    if (value && value.blocks && value.blocks.length > 0) {
+      setBlocks(value.blocks);
+    }
+  }, [value, setBlocks]);
 
   // Emit document changes to the server
   const emitChanges = useCallback(
@@ -121,15 +129,25 @@ function Editor({ value, workspaceId }) {
           isInitializedRef.current = true;
         },
         onChange: async (api, event) => {
-          const data = await api.saver.save();
-          if (
-            data &&
-            data.blocks &&
-            data.blocks.length > 0 &&
-            isInitializedRef.current
-          ) {
-            saveToDatabase({ detail: JSON.stringify(data) });
-            emitChanges(data);
+          try {
+            const data = await api.saver.save();
+            if (
+              data &&
+              data.blocks &&
+              data.blocks.length > 0 &&
+              isInitializedRef.current
+            ) {
+              // Update context first
+              setBlocks(data.blocks);
+              
+              // Then handle other updates
+              saveToDatabase({ detail: JSON.stringify(data) });
+              emitChanges(data);
+              
+              console.log("Updated editor blocks:", data.blocks);
+            }
+          } catch (error) {
+            console.error("Error in editor onChange:", error);
           }
         },
       });
@@ -141,7 +159,7 @@ function Editor({ value, workspaceId }) {
       console.error("Failed to initialize Editor.js:", error);
       console.error("Initial value:", value);
     }
-  }, [value, saveToDatabase, emitChanges]);
+  }, [value, saveToDatabase, emitChanges, setBlocks]);
 
   const calculateCaretPosition = useCallback(() => {
     const selection = document.getSelection();

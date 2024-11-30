@@ -137,9 +137,9 @@ export const ActiveUsers = () => {
     }
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ">
         <Users className="w-4 h-4 text-gray-500 " />
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-600 flex whitespace-nowrap">
           {activeUsers.length} Active
         </span>
       </div>

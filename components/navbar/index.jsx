@@ -11,9 +11,7 @@ const Navbar = () => {
   return (
     <div className="bg-transparent fixed top-0 z-10 min-w-full ">
       <nav className="py-7 px-10 flex justify-between items-center ">
-        <h5 className="text-2xl font-bold uppercase underline outline py-2 w-fit px-6 outline-[3px]">
-          Logo
-        </h5>
+        <img src="/logo.png" alt="Logo" className="h-14 w-auto mr-4" />
         <div className="flex items-center gap-4">
           <ModeToggle />
         </div>

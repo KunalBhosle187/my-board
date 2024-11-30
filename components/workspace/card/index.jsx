@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import EditWorkspace from "../forms/edit";
 
 const WorkspaceCard = ({
   title,
@@ -38,6 +39,14 @@ const WorkspaceCard = ({
             </Badge>
           )}
         </div>
+
+        {!isShared && (
+          <EditWorkspace
+            id={id}
+            currentTitle={title}
+            currentDescription={description}
+          />
+        )}
 
         <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
 

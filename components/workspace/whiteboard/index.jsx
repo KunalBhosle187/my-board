@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, use } from "react";
+import React, { useEffect, useState, useCallback, useRef, useContext } from "react";
 import { Excalidraw, getSceneVersion } from "@excalidraw/excalidraw";
 import { useSocket } from "@/components/provider/socket-provider";
 import { useAuth, useUser } from "@clerk/clerk-react";
@@ -8,12 +8,14 @@ import { debounce } from "lodash";
 import { toast } from "sonner";
 import { updateWorkSpaceById } from "@/lib/queries";
 import { useTheme } from "next-themes";
+import { ExcalidrawData } from "@/components/provider/excalidraw-provider";
 
 const Whiteboard = ({ reqId, initialData }) => {
   const { theme } = useTheme();
   const { socket } = useSocket();
   const { userId } = useAuth();
   const { user } = useUser();
+  const { setExcalidrawAPI } = useContext(ExcalidrawData);
 
   const [pointerData, setPointerData] = useState(new Map());
   const excalidrawAPIRef = useRef(null);
@@ -209,6 +211,7 @@ const Whiteboard = ({ reqId, initialData }) => {
         excalidrawAPI={(api) => {
           if (api) {
             excalidrawAPIRef.current = api;
+            setExcalidrawAPI(api);
           }
         }}
         initialData={initialData}

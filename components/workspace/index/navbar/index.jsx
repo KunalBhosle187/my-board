@@ -17,9 +17,7 @@ const Navbar = () => {
     <>
       <div className="p-3 backdrop-blur-md shadow-sm flex justify-between items-center">
         <div>
-          <span className="font-bold uppercase m-1 border-white border-2 py-1 px-2 mr-4">
-            Logo
-          </span>
+          <img src="/logo.png" alt="Logo" className="h-10 w-auto mr-4" />
         </div>
 
         <div className="flex items-center gap-x-3">
