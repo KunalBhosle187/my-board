@@ -30,7 +30,6 @@ const Navbar = ({ title, id }) => {
   const [isOwner, setIsOwner] = useState(false);
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   useEffect(() => {
     const checkOwnership = async () => {
       const data = await getWorkSpaceById(id);
@@ -116,7 +115,7 @@ const Navbar = ({ title, id }) => {
           <div className="flex items-center justify-end gap-2">
             {/* <AIDialog /> */}
             <ExportPdf />
-            {isOwner && <AddUserModal id={id} />}
+            {isOwner && <AddUserModal reqId={id} />}
             <ActiveUsers />
             <ModeToggle />
             <UserButton afterSignOutUrl="/" />

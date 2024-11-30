@@ -34,6 +34,7 @@ export const AddUserModal = ({ reqId }) => {
     setOpen(false);
 
     try {
+      console.log({ reqId, newEmail });
       const data = await inviteUser(reqId, newEmail);
       if (data.error) {
         toast.error(data.error);
@@ -48,35 +49,35 @@ export const AddUserModal = ({ reqId }) => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} variant="outline" size="sm">
-        <Share2Icon className="mr-2 size-4" /> Invite
+      <Button onClick={() => setOpen(true)} variant="outline" size="icon">
+        <Share2Icon className="h-4 w-4" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Share workspace</DialogTitle>
+            <DialogTitle>Invite Collaborator</DialogTitle>
             <DialogDescription>
-              Invite others to collaborate on this workspace in real-time.
+              Add a collaborator to your workspace by entering their email
+              address.
             </DialogDescription>
           </DialogHeader>
-          <div>
-            <div className="flex items-center space-x-2">
+
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
               <Input
-                placeholder="Enter email address"
+                id="email"
+                placeholder="Enter collaborator's email"
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
               />
             </div>
           </div>
-          <div className="mt-4 flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={() => navigator.clipboard.writeText(window.location)}
-            >
-              Copy link
+
+          <div className="flex justify-end">
+            <Button onClick={handleSubmit} size="sm">
+              Send Invite
             </Button>
-            <Button onClick={handleSubmit}>Invite</Button>
           </div>
         </DialogContent>
       </Dialog>

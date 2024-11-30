@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import EditWorkspace from "../forms/edit";
+import { AddUserModal } from "../collaborator";
 
 const WorkspaceCard = ({
   title,
@@ -31,7 +32,9 @@ const WorkspaceCard = ({
       <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-black/10" />
       <div className="relative z-10 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+          <h2 className="text-xl font-semibold tracking-tight max-w-[80%]">
+            {title}
+          </h2>
           {isShared && (
             <Badge variant="secondary" className="gap-1.5">
               <Users2 className="h-3.5 w-3.5" />
@@ -40,15 +43,9 @@ const WorkspaceCard = ({
           )}
         </div>
 
-        {!isShared && (
-          <EditWorkspace
-            id={id}
-            currentTitle={title}
-            currentDescription={description}
-          />
-        )}
-
-        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+          {description}
+        </p>
 
         <div className="flex items-center text-sm text-muted-foreground">
           <Clock className="mr-1.5 h-3.5 w-3.5" />
@@ -59,17 +56,23 @@ const WorkspaceCard = ({
           })}
         </div>
 
-        <div className="pt-4">
-          <Button
-            asChild
-            className="group/button w-full justify-between"
-            variant="outline"
-          >
+        <div className="pt-4 flex gap-2">
+          <Button asChild className="group/button  justify-between">
             <Link href={"/workspace/" + id}>
               <span>Open Workspace</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
             </Link>
           </Button>
+          {!isShared && (
+            <div className="relative w-full items-center flex gap-2">
+              <EditWorkspace
+                id={id}
+                currentTitle={title}
+                currentDescription={description}
+              />
+              <AddUserModal reqId={id.toString()} />
+            </div>
+          )}
         </div>
       </div>
 
